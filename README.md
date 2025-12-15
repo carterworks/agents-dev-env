@@ -18,7 +18,30 @@ This repository provides a Docker-based development environment that includes:
 
 - [Docker](https://docs.docker.com/get-docker/)
 
-### Build and Run
+### Option 1: Use Pre-Built Image (Recommended)
+
+Pull and run the pre-built image from GitHub Container Registry:
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/carterworks/agents-dev-env:latest
+
+# Run interactively with current directory mounted
+docker run -it -v $(pwd):/workspace ghcr.io/carterworks/agents-dev-env:latest
+
+# Or run in background
+docker run -d --name dev-env-container -v $(pwd):/workspace ghcr.io/carterworks/agents-dev-env:latest
+docker exec -it dev-env-container /bin/bash
+```
+
+**Available tags:**
+- `latest` - Latest build from main branch
+- `v1.0.0` - Specific version tags
+- `main-<sha>` - Specific commit from main branch
+
+### Option 2: Build Locally
+
+Build the Docker image from source:
 
 ```bash
 # Build the Docker image
@@ -91,6 +114,26 @@ mise run info
 | `ENVIRONMENT.md` | Complete environment specification and package list |
 | `README.md` | This file - usage instructions |
 | `.gitignore` | Standard ignore patterns for development artifacts |
+| `.github/workflows/docker-publish.yml` | GitHub Actions workflow for automated image publishing |
+
+## Automated Publishing
+
+The Docker image is automatically built and published to GitHub Container Registry on:
+- **Pushes to main branch** → Tagged as `latest`
+- **Version tags** (e.g., `v1.0.0`) → Tagged with version numbers
+- **Pull requests** → Built but not published (for testing)
+
+The workflow:
+1. Builds the Docker image
+2. Publishes to `ghcr.io/carterworks/agents-dev-env`
+3. Tags appropriately based on trigger
+4. Uses Docker layer caching for faster builds
+
+To create a new release:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
 ## Common Tasks
 
