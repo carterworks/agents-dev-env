@@ -31,6 +31,7 @@
             python311
             python311Packages.pip
             python311Packages.virtualenv
+            uv  # Fast Python package installer and resolver
 
             nodejs_22
             nodePackages.npm
@@ -91,6 +92,7 @@
             echo ""
             echo "Languages available:"
             echo "  Python: $(python3 --version)"
+            echo "  uv: $(uv --version)"
             echo "  Node.js: $(node --version)"
             echo "  Go: $(go version | cut -d' ' -f3)"
             echo "  Rust: $(rustc --version | cut -d' ' -f2)"

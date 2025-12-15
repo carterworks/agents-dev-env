@@ -13,7 +13,9 @@ This document describes the complete development environment configuration for t
 
 ### Python
 - **Version**: 3.11.14
-- **Package Managers**: pip 24.0, pip3
+- **Package Managers**:
+  - pip 24.0, pip3
+  - uv (fast Python package installer and resolver, via Nix)
 - **Key Packages**:
   - conan 2.23.0
   - PyYAML 6.0.1

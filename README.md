@@ -41,6 +41,7 @@ direnv allow
 
 The Nix environment includes:
 - All major programming languages (Python, Node.js, Go, Rust, Java, PHP, Ruby, Perl)
+- Python tooling: uv (fast package installer and resolver)
 - Build tools (GCC, Clang, CMake, Make, Ninja)
 - Development utilities (Git, curl, wget, jq, vim, tmux)
 - Database clients (PostgreSQL, Redis)
