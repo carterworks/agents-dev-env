@@ -86,6 +86,7 @@ echo 'eval "$(mise activate bash)"' >> ~/.bashrc
 source ~/.bashrc
 
 # Install all tools defined in .mise.toml
+# This includes: language runtimes, Claude Code, GitHub CLI, and opencode
 mise install
 
 # Run setup tasks (install Python packages, npm globals, etc.)
@@ -94,6 +95,12 @@ mise run setup
 # Show environment info
 mise run info
 ```
+
+**Tools managed by mise:**
+- All language runtimes (Python, Node.js, Go, Rust, Java, Ruby)
+- **Claude Code** - Anthropic's official CLI for Claude AI
+- **GitHub CLI** - GitHub's official command-line tool
+- **opencode** - SST's code generation tool
 
 ## Hybrid Approach: Nix + mise (Best of Both Worlds)
 
@@ -128,6 +135,7 @@ See [ENVIRONMENT.md](./ENVIRONMENT.md) for complete specifications including:
 - **Languages**: Python 3.11, Node.js 22, Go 1.24, Rust 1.91, Java 21, PHP 8.4, Ruby 3.3, Perl 5.38
 - **Build Tools**: GCC 13, Clang 18, CMake 3.28, Make 4.3
 - **Databases**: PostgreSQL 16, Redis 7, SQLite 3.45
+- **Development Tools** (via mise): Claude Code, GitHub CLI, opencode
 
 ## File Descriptions
 

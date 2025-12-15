@@ -13,6 +13,11 @@ rust = "1.91.1"
 java = "openjdk-21"
 ruby = "3.3.6"
 
+# Development tools (frequently updated - managed via mise)
+"npm:@anthropic-ai/claude-code" = "latest"
+"go:github.com/sst/opencode" = "latest"
+gh = "latest"  # GitHub CLI (includes Copilot CLI extensions)
+
 # Additional tools (incidentals)
 # Uncomment and add as needed:
 # "npm:typescript" = "5.9.3"
@@ -111,7 +116,12 @@ echo "  pnpm: $(pnpm --version 2>&1)"
 echo "  yarn: $(yarn --version 2>&1)"
 echo "  cargo: $(cargo --version 2>&1)"
 echo ""
-echo "Tools managed by mise:"
+echo "Development Tools:"
+echo "  Claude Code: $(claude-code --version 2>&1 || echo 'not installed')"
+echo "  GitHub CLI: $(gh --version 2>&1 | head -1 || echo 'not installed')"
+echo "  opencode: $(opencode --version 2>&1 || echo 'not installed')"
+echo ""
+echo "All tools managed by mise:"
 mise list
 """
 

@@ -99,14 +99,31 @@ This document describes the complete development environment configuration for t
 - **vim**: Installed
 - **tmux**: Installed
 
+## Frequently Updated Development Tools (via mise)
+
+These tools are managed via mise for easy updates and version management:
+
+- **Claude Code** (`@anthropic-ai/claude-code`): Anthropic's official CLI for Claude AI
+- **GitHub CLI** (`gh`): GitHub's official command-line tool (includes Copilot CLI extensions)
+- **opencode** (`github.com/sst/opencode`): SST's code generation tool
+
+To install these tools, run:
+```bash
+mise install
+```
+
+To update to the latest versions:
+```bash
+mise upgrade
+```
+
 ## Notable Absences
 
-The following common tools are **NOT** installed:
+The following common tools are **NOT** installed in the base environment (but can be added via mise):
 - Docker
 - kubectl
 - terraform
 - ansible
-- gh (GitHub CLI)
 - ffmpeg
 - ImageMagick
 - sqlite3 CLI (library only)
@@ -123,10 +140,11 @@ The following common tools are **NOT** installed:
 ### Using Nix Flake (Primary)
 Use the provided `flake.nix` to set up the core development environment with reproducible package versions.
 
-### Using mise (Incidentals)
+### Using mise (Incidentals & Frequently Updated Tools)
 Use the provided `.mise.toml` for:
 - Language version management
 - Project-specific tool versions
+- Frequently updated development tools (Claude Code, GitHub CLI, opencode)
 - Additional utilities not critical to core functionality
 
 ### Using Docker
