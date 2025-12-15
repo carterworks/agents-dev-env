@@ -96,40 +96,37 @@ echo 'eval "$(mise activate bash)"' >> ~/.bashrc
 source ~/.bashrc
 
 # Install all tools defined in .mise.toml
-# This includes: language runtimes, Claude Code, GitHub CLI, and opencode
+# This includes: Claude Code, GitHub CLI, and opencode
 mise install
 
-# Run setup tasks (install Python packages, npm globals, etc.)
-mise run setup
-
-# Show environment info
+# Show information about mise-managed tools
 mise run info
 ```
 
 **Tools managed by mise:**
-- All language runtimes (Python, Node.js, Go, Rust, Java, Ruby)
 - **Claude Code** - Anthropic's official CLI for Claude AI
-- **GitHub CLI** - GitHub's official command-line tool
+- **GitHub CLI** - GitHub's official command-line tool (includes Copilot extensions)
 - **opencode** - SST's code generation tool
 
-## Hybrid Approach: Nix + mise (Best of Both Worlds)
+*Note: Language runtimes (Python, Node.js, Go, Rust, Java, Ruby, etc.) are provided by Nix, not mise.*
+
+## Hybrid Approach: Nix + mise (Recommended)
 
 For maximum flexibility and reproducibility:
 
 ```bash
-# 1. Use Nix for core system packages and compilers
+# 1. Use Nix for all system packages, compilers, and language runtimes
 nix develop
 
-# 2. Use mise for language runtime versions and additional tools
+# 2. Use mise for frequently updated development tools
 mise install
-mise run setup
 
 # 3. Your environment is now fully configured!
 ```
 
 This approach gives you:
-- Nix: Reproducible base system and libraries
-- mise: Easy version management and project-specific tools
+- **Nix**: Reproducible base system, libraries, and language runtimes
+- **mise**: Easy updates for frequently changing tools (Claude Code, GitHub CLI, opencode)
 
 ## Environment Details
 
@@ -189,12 +186,19 @@ docker exec -it dev-env-container mise use tool@version
 
 ### Managing Language Versions
 
-**mise** is the best tool for this:
+Language versions are managed through **Nix**:
 ```bash
-# Change version in .mise.toml
-# Example: node = "20.11.0"
-mise install
+# Edit flake.nix and change package versions
+# Example: nodejs_22 -> nodejs_20
+# Then rebuild the environment
+nix develop
+
+# Or rebuild the Docker image
+nix build .#dockerImage
+docker load < result
 ```
+
+**mise** is only used for frequently updated dev tools (Claude Code, GitHub CLI, opencode).
 
 ### Running Project Tasks
 

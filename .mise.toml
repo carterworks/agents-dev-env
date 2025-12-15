@@ -1,52 +1,25 @@
 # mise configuration for agents-dev-env
 # https://mise.jdx.dev/
 
-# This file manages runtime versions and additional tooling
-# Use this alongside Nix flake for complete environment replication
+# This file manages frequently updated development tools
+# Language runtimes are provided by Nix (see flake.nix)
 
 [tools]
-# Language runtimes
-python = "3.11.14"
-node = "22.21.1"
-go = "1.24.7"
-rust = "1.91.1"
-java = "openjdk-21"
-ruby = "3.3.6"
+# Frequently updated development tools (managed via mise)
+"npm:@anthropic-ai/claude-code" = "latest"  # Anthropic's Claude AI CLI
+"go:github.com/sst/opencode" = "latest"     # SST's code generation tool
+gh = "latest"                                # GitHub CLI (includes Copilot extensions)
 
-# Development tools (frequently updated - managed via mise)
-"npm:@anthropic-ai/claude-code" = "latest"
-"go:github.com/sst/opencode" = "latest"
-gh = "latest"  # GitHub CLI (includes Copilot CLI extensions)
-
-# Additional tools (incidentals)
-# Uncomment and add as needed:
+# Additional tools (optional - uncomment as needed)
 # "npm:typescript" = "5.9.3"
 # "npm:eslint" = "9.39.1"
 # "npm:prettier" = "3.7.4"
-# "npm:nodemon" = "3.1.11"
 # terraform = "latest"
 # kubectl = "latest"
 
 [env]
-# Environment variables
-LANG = "C.UTF-8"
-LC_ALL = "C.UTF-8"
-
-# Python
-PYTHON_VERSION = "3.11"
-PYTHONPATH = "{{config_root}}/.venv/lib/python3.11/site-packages"
-
-# Node.js
-NODE_VERSION = "22"
-NODE_ENV = "development"
-
-# Go
-GOPATH = "{{env.HOME}}/go"
-GOBIN = "{{env.GOPATH}}/bin"
-
-# Rust
-CARGO_HOME = "{{env.HOME}}/.cargo"
-RUSTUP_HOME = "{{env.HOME}}/.rustup"
+# Minimal environment variables (languages provided by Nix)
+_.file = ".env"  # Load .env file if present
 
 [settings]
 # Automatically install missing tools
@@ -61,68 +34,22 @@ verbose = false
 # Plugin settings
 experimental = true
 
-[tasks.install-python-packages]
-description = "Install Python packages from requirements"
-run = """
-pip install --upgrade pip
-pip install \\
-  conan==2.23.0 \\
-  PyYAML==6.0.1 \\
-  Jinja2==3.1.6 \\
-  requests==2.32.5 \\
-  cryptography==41.0.7 \\
-  python-dateutil==2.9.0.post0 \\
-  packaging==24.0
-"""
-
-[tasks.install-global-npm]
-description = "Install global npm packages"
-run = """
-npm install -g \\
-  pnpm@10.25.0 \\
-  yarn@1.22.22 \\
-  typescript@5.9.3 \\
-  eslint@9.39.1 \\
-  prettier@3.7.4 \\
-  ts-node@10.9.2 \\
-  nodemon@3.1.11 \\
-  playwright@1.56.1 \\
-  http-server@14.1.1 \\
-  serve@14.2.5
-"""
-
-[tasks.setup]
-description = "Complete environment setup"
-depends = ["install-python-packages", "install-global-npm"]
-
 [tasks.info]
-description = "Show environment information"
+description = "Show mise-managed development tools"
 run = """
-echo "mise Environment Information"
-echo "============================"
+echo "mise-managed Development Tools"
+echo "==============================="
 echo ""
-echo "Languages:"
-echo "  Python: $(python --version 2>&1)"
-echo "  Node.js: $(node --version 2>&1)"
-echo "  Go: $(go version 2>&1)"
-echo "  Rust: $(rustc --version 2>&1)"
-echo "  Java: $(java -version 2>&1 | head -1)"
-echo "  Ruby: $(ruby --version 2>&1)"
-echo ""
-echo "Package Managers:"
-echo "  pip: $(pip --version 2>&1)"
-echo "  npm: $(npm --version 2>&1)"
-echo "  pnpm: $(pnpm --version 2>&1)"
-echo "  yarn: $(yarn --version 2>&1)"
-echo "  cargo: $(cargo --version 2>&1)"
-echo ""
-echo "Development Tools:"
-echo "  Claude Code: $(claude-code --version 2>&1 || echo 'not installed')"
-echo "  GitHub CLI: $(gh --version 2>&1 | head -1 || echo 'not installed')"
-echo "  opencode: $(opencode --version 2>&1 || echo 'not installed')"
-echo ""
-echo "All tools managed by mise:"
+echo "Installed tools:"
 mise list
+echo ""
+echo "Tool versions:"
+echo "  Claude Code: $(claude-code --version 2>&1 || echo 'not installed - run: mise install')"
+echo "  GitHub CLI: $(gh --version 2>&1 | head -1 || echo 'not installed - run: mise install')"
+echo "  opencode: $(opencode --version 2>&1 || echo 'not installed - run: mise install')"
+echo ""
+echo "To install all tools: mise install"
+echo "To upgrade tools:     mise upgrade"
 """
 
 # Additional aliases for common operations
