@@ -131,8 +131,133 @@
           };
         };
 
-        # You can also define specific package outputs if needed
-        packages.default = pkgs.hello;
+        # Docker image built with Nix
+        packages = {
+          # Default package (for convenience)
+          default = self.packages.${system}.dockerImage;
+
+          # Docker image with layered architecture
+          dockerImage = pkgs.dockerTools.buildLayeredImage {
+            name = "dev-env";
+            tag = "latest";
+
+            # Include all development tools
+            contents = with pkgs; [
+              # Base utilities
+              bashInteractive
+              coreutils
+              findutils
+              gnugrep
+              gnused
+              gawk
+
+              # Build essentials
+              gcc13
+              gnumake
+              cmake
+              ninja
+              pkg-config
+              clang_18
+
+              # Programming Languages
+              python311
+              python311Packages.pip
+              python311Packages.virtualenv
+              uv
+
+              nodejs_22
+              nodePackages.npm
+              nodePackages.pnpm
+              nodePackages.yarn
+              bun
+
+              go_1_24
+              rustc
+              cargo
+
+              jdk21
+              php84
+              ruby_3_3
+              perl538
+
+              # Development tools
+              git
+              curl
+              wget
+              jq
+              vim
+              tmux
+
+              # TypeScript & JavaScript tools
+              nodePackages.typescript
+              nodePackages.eslint
+              nodePackages.prettier
+              nodePackages.ts-node
+              nodePackages.nodemon
+
+              # Build tools
+              gnupatch
+
+              # System libraries
+              openssl
+              openssl.dev
+              zlib
+              zlib.dev
+              libffi
+              libffi.dev
+              sqlite
+              sqlite.dev
+
+              # Databases
+              postgresql_16
+              redis
+
+              # mise for runtime management
+              mise
+            ];
+
+            # Configuration
+            config = {
+              Cmd = [ "${pkgs.bashInteractive}/bin/bash" ];
+              WorkingDir = "/workspace";
+              Env = [
+                "LANG=C.UTF-8"
+                "LC_ALL=C.UTF-8"
+                "PYTHON_VERSION=3.11"
+                "NODE_VERSION=22"
+                "PATH=/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+              ];
+
+              # Entrypoint script
+              Entrypoint = [
+                "${pkgs.bashInteractive}/bin/bash"
+                "-c"
+                ''
+                  echo "Development Environment Ready!"
+                  echo "=============================="
+                  echo ""
+                  echo "This environment uses Nix-built Docker image"
+                  echo ""
+                  echo "Languages available:"
+                  echo "  Python: $(python3 --version)"
+                  echo "  uv: $(uv --version)"
+                  echo "  Node.js: $(node --version)"
+                  echo "  Go: $(go version)"
+                  echo "  Rust: $(rustc --version)"
+                  echo "  Java: $(java -version 2>&1 | head -1)"
+                  echo "  PHP: $(php --version | head -1)"
+                  echo "  Ruby: $(ruby --version)"
+                  echo ""
+                  echo "To use mise for additional tools:"
+                  echo "  mise install    # Install tools from .mise.toml"
+                  echo "  mise run info   # Show environment info"
+                  echo ""
+                  exec "$@"
+                ''
+              ];
+            };
+          };
+        };
       }
     );
 }

@@ -7,19 +7,20 @@ This repository contains configuration files to replicate a comprehensive develo
 Three approaches are provided for environment replication:
 
 1. **Nix Flake** (Recommended) - Declarative, reproducible environment
-2. **Docker** - Layered container (Ubuntu → Nix → mise) for isolated development
+2. **Docker** - Nix-built container image for isolated development
 3. **mise** - Runtime version management and tooling
 
 You can use them independently or combine them (e.g., Nix + mise for best of both worlds).
 
 ### Architecture Philosophy
 
-This repository follows a **layered architecture**:
-- **Base Layer (Ubuntu 24.04)**: Modern, stable Linux distribution
-- **Package Management (Nix)**: Reproducible, declarative package installation
-- **Runtime Management (mise)**: Flexible version management for project-specific needs
+This repository uses **Nix** as the foundation for reproducibility:
+- **Nix Flake**: Declarative package management with exact version pinning
+- **Development Shell**: Interactive development with `nix develop`
+- **Docker Image**: Nix-built container using `dockerTools.buildLayeredImage`
+- **mise Integration**: Optional runtime version management for frequently updated tools
 
-The Docker image uses all three layers, while you can use Nix or mise independently on your local machine.
+All approaches are built on the same Nix package definitions, ensuring consistency across local development, CI/CD, and containerized environments.
 
 ## Quick Start
 
@@ -47,32 +48,40 @@ The Nix environment includes:
 - Database clients (PostgreSQL, Redis)
 - System libraries with dev headers
 
-### Option 2: Using Docker (Layered Architecture)
+### Option 2: Using Docker (Nix-Built Image)
 
-**Prerequisites**: [Install Docker](https://docs.docker.com/get-docker/)
+**Prerequisites**:
+- [Install Nix](https://nixos.org/download.html) with flakes enabled
+- [Install Docker](https://docs.docker.com/get-docker/)
 
-The Dockerfile uses a **layered approach**:
-1. **Ubuntu 24.04** as the base OS
-2. **Nix** for reproducible package management
-3. **mise** for flexible runtime version management
+The Docker image is built entirely with Nix for maximum reproducibility:
 
 ```bash
-# Build the image (this will take a few minutes on first build)
-docker build -t dev-env .
+# Build the Docker image with Nix
+nix build .#dockerImage
+
+# Load the image into Docker
+docker load < result
 
 # Run interactively with current directory mounted
-docker run -it -v $(pwd):/workspace dev-env
+docker run -it -v $(pwd):/workspace dev-env:latest
 
 # Or run in background for long-running tasks
-docker run -d --name dev-env-container -v $(pwd):/workspace dev-env
+docker run -d --name dev-env-container -v $(pwd):/workspace dev-env:latest
 docker exec -it dev-env-container /bin/bash
 ```
 
 **Advantages of this approach:**
-- **Reproducible**: Nix ensures consistent package versions
-- **Flexible**: mise allows easy runtime version switching
-- **Maintainable**: Changes to flake.nix or .mise.toml automatically update the Docker image
-- **Isolated**: Full environment in a container, won't affect your host system
+- **Fully Reproducible**: Entire image built with Nix, byte-for-byte reproducible
+- **Efficient Layering**: Nix's buildLayeredImage creates optimal Docker layers
+- **Smaller Images**: Better deduplication and compression
+- **Consistent with Dev Shell**: Uses same package definitions as `nix develop`
+- **mise Integration**: mise included for additional runtime version management
+- **No Ubuntu Base**: Pure Nix environment, smaller attack surface
+
+**Alternative: Quick build without Nix**
+
+If you don't have Nix but want a Docker image, a traditional Dockerfile is available as `Dockerfile.reference`.
 
 ### Option 3: Using mise
 
@@ -142,8 +151,8 @@ See [ENVIRONMENT.md](./ENVIRONMENT.md) for complete specifications including:
 
 | File | Purpose |
 |------|---------|
-| `flake.nix` | Nix flake for reproducible environment setup |
-| `Dockerfile` | Layered container image (Ubuntu → Nix → mise) |
+| `flake.nix` | Nix flake for reproducible environment setup and Docker image build |
+| `Dockerfile.reference` | Traditional Dockerfile (reference only, Nix build recommended) |
 | `.mise.toml` | Runtime version management and task automation |
 | `ENVIRONMENT.md` | Complete environment specification and package list |
 | `README.md` | This file - usage instructions |
@@ -169,14 +178,12 @@ mise install
 
 **With Docker:**
 ```bash
-# Option 1: Edit flake.nix (for system packages)
-# or .mise.toml (for runtime tools)
-# Then rebuild the image
-docker build -t dev-env .
+# Option 1: Edit flake.nix (for system packages) or .mise.toml (for runtime tools)
+# Then rebuild the image with Nix
+nix build .#dockerImage
+docker load < result
 
-# Option 2: Install tools directly in running container
-docker exec -it dev-env-container nix-env -iA nixpkgs.package-name
-# or
+# Option 2: Install tools directly in running container with mise
 docker exec -it dev-env-container mise use tool@version
 ```
 
@@ -218,11 +225,17 @@ nix develop --verbose
 ### Docker Issues
 
 ```bash
-# Clean build (no cache)
-docker build --no-cache -t dev-env .
+# Rebuild Docker image with Nix
+nix build .#dockerImage --rebuild
+
+# Check if image loaded correctly
+docker images | grep dev-env
 
 # Check container logs
 docker logs dev-env-container
+
+# If using the reference Dockerfile
+docker build -f Dockerfile.reference -t dev-env .
 ```
 
 ### mise Issues

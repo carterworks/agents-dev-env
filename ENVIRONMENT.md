@@ -150,7 +150,19 @@ Use the provided `.mise.toml` for:
 - Additional utilities not critical to core functionality
 
 ### Using Docker
-Use the provided `Dockerfile` for containerized replication of the entire environment.
+Build a Docker image using Nix for maximum reproducibility:
+```bash
+nix build .#dockerImage
+docker load < result
+```
+
+The Docker image is built with `dockerTools.buildLayeredImage`, providing:
+- Byte-for-byte reproducible builds
+- Optimal layer caching
+- Same package definitions as the dev shell
+- Smaller image sizes compared to traditional Dockerfile builds
+
+A traditional `Dockerfile.reference` is available for reference, but the Nix build is recommended.
 
 ## Notes
 
