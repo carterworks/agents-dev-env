@@ -1,245 +1,151 @@
-# Development Environment Replication
+# Development Environment
 
-This repository contains configuration files to replicate a comprehensive development environment supporting multiple programming languages and tools.
+A comprehensive, portable development environment based on Ubuntu 24.04 LTS with support for multiple programming languages and modern development tools.
 
 ## Overview
 
-Three approaches are provided for environment replication:
+This repository provides a Docker-based development environment that includes:
 
-1. **Nix Flake** (Recommended) - Declarative, reproducible environment
-2. **Docker** - Nix-built container image for isolated development
-3. **mise** - Runtime version management and tooling
-
-You can use them independently or combine them (e.g., Nix + mise for best of both worlds).
-
-### Architecture Philosophy
-
-This repository uses **Nix** as the foundation for reproducibility:
-- **Nix Flake**: Declarative package management with exact version pinning
-- **Development Shell**: Interactive development with `nix develop`
-- **Docker Image**: Nix-built container using `dockerTools.buildLayeredImage`
-- **mise Integration**: Optional runtime version management for frequently updated tools
-
-All approaches are built on the same Nix package definitions, ensuring consistency across local development, CI/CD, and containerized environments.
+- **Ubuntu 24.04 LTS** - Familiar, stable Linux base
+- **Multiple Languages** - Python, Node.js, Go, Rust, Java, PHP, Ruby, Perl
+- **mise** - For frequently updated development tools (Claude Code, GitHub CLI, opencode)
+- **Build Tools** - GCC, Clang, CMake, Make, Ninja
+- **Databases** - PostgreSQL and Redis clients
 
 ## Quick Start
 
-### Option 1: Using Nix Flake (Recommended)
+### Prerequisites
 
-**Prerequisites**: [Install Nix](https://nixos.org/download.html) with flakes enabled.
+- [Docker](https://docs.docker.com/get-docker/)
 
-```bash
-# Enable flakes (if not already enabled)
-echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
-
-# Enter the development environment
-nix develop
-
-# Or use direnv for automatic activation
-echo "use flake" > .envrc
-direnv allow
-```
-
-The Nix environment includes:
-- All major programming languages (Python, Node.js, Go, Rust, Java, PHP, Ruby, Perl)
-- Python tooling: uv (fast package installer and resolver)
-- Build tools (GCC, Clang, CMake, Make, Ninja)
-- Development utilities (Git, curl, wget, jq, vim, tmux)
-- Database clients (PostgreSQL, Redis)
-- System libraries with dev headers
-
-### Option 2: Using Docker (Nix-Built Image)
-
-**Prerequisites**:
-- [Install Nix](https://nixos.org/download.html) with flakes enabled
-- [Install Docker](https://docs.docker.com/get-docker/)
-
-The Docker image is built entirely with Nix for maximum reproducibility:
+### Build and Run
 
 ```bash
-# Build the Docker image with Nix
-nix build .#dockerImage
-
-# Load the image into Docker
-docker load < result
+# Build the Docker image
+docker build -t dev-env .
 
 # Run interactively with current directory mounted
-docker run -it -v $(pwd):/workspace dev-env:latest
+docker run -it -v $(pwd):/workspace dev-env
 
-# Or run in background for long-running tasks
-docker run -d --name dev-env-container -v $(pwd):/workspace dev-env:latest
+# Or run in background
+docker run -d --name dev-env-container -v $(pwd):/workspace dev-env
 docker exec -it dev-env-container /bin/bash
 ```
 
-**Advantages of this approach:**
-- **Fully Reproducible**: Entire image built with Nix, byte-for-byte reproducible
-- **Efficient Layering**: Nix's buildLayeredImage creates optimal Docker layers
-- **Smaller Images**: Better deduplication and compression
-- **Consistent with Dev Shell**: Uses same package definitions as `nix develop`
-- **mise Integration**: mise included for additional runtime version management
-- **No Ubuntu Base**: Pure Nix environment, smaller attack surface
+### Install Development Tools
 
-**Alternative: Quick build without Nix**
-
-If you don't have Nix but want a Docker image, a traditional Dockerfile is available as `Dockerfile.reference`.
-
-### Option 3: Using mise
-
-**Prerequisites**: [Install mise](https://mise.jdx.dev/getting-started.html)
+Once inside the container:
 
 ```bash
-# Install mise (if not already installed)
-curl https://mise.jdx.dev/install.sh | sh
-
-# Activate mise in your shell (add to ~/.bashrc or ~/.zshrc)
-echo 'eval "$(mise activate bash)"' >> ~/.bashrc
-source ~/.bashrc
-
-# Install all tools defined in .mise.toml
-# This includes: Claude Code, GitHub CLI, and opencode
+# Install mise-managed tools (Claude Code, GitHub CLI, opencode)
 mise install
 
-# Show information about mise-managed tools
+# Show information about installed tools
 mise run info
 ```
 
-**Tools managed by mise:**
+## What's Included
+
+### Programming Languages
+
+- **Python 3.11** with pip and uv (fast package installer)
+- **Node.js 22** with npm, pnpm, yarn, and bun
+- **Go 1.24**
+- **Rust 1.91**
+- **Java 21** (OpenJDK)
+- **PHP 8.3**
+- **Ruby 3.3**
+- **Perl 5.38**
+
+### Build Tools & Compilers
+
+- GCC 13
+- Clang 18
+- CMake 3.28
+- Make 4.3
+- Ninja
+
+### Development Tools (via mise)
+
 - **Claude Code** - Anthropic's official CLI for Claude AI
-- **GitHub CLI** - GitHub's official command-line tool (includes Copilot extensions)
+- **GitHub CLI (gh)** - GitHub's official command-line tool with Copilot extensions
 - **opencode** - SST's code generation tool
 
-*Note: Language runtimes (Python, Node.js, Go, Rust, Java, Ruby, etc.) are provided by Nix, not mise.*
+### Database Clients
 
-## Hybrid Approach: Nix + mise (Recommended)
+- PostgreSQL 16 client
+- Redis 7 client
 
-For maximum flexibility and reproducibility:
+### Utilities
 
-```bash
-# 1. Use Nix for all system packages, compilers, and language runtimes
-nix develop
-
-# 2. Use mise for frequently updated development tools
-mise install
-
-# 3. Your environment is now fully configured!
-```
-
-This approach gives you:
-- **Nix**: Reproducible base system, libraries, and language runtimes
-- **mise**: Easy updates for frequently changing tools (Claude Code, GitHub CLI, opencode)
-
-## Environment Details
-
-See [ENVIRONMENT.md](./ENVIRONMENT.md) for complete specifications including:
-- Exact package versions
-- Installed libraries
-- Programming language versions
-- Build tools and compilers
-
-### Core Components
-
-- **OS**: Ubuntu 24.04.3 LTS
-- **Languages**: Python 3.11, Node.js 22, Go 1.24, Rust 1.91, Java 21, PHP 8.4, Ruby 3.3, Perl 5.38
-- **Build Tools**: GCC 13, Clang 18, CMake 3.28, Make 4.3
-- **Databases**: PostgreSQL 16, Redis 7, SQLite 3.45
-- **Development Tools** (via mise): Claude Code, GitHub CLI, opencode
+- Git, curl, wget, jq
+- vim, tmux
+- Standard Ubuntu tools
 
 ## File Descriptions
 
 | File | Purpose |
 |------|---------|
-| `flake.nix` | Nix flake for reproducible environment setup and Docker image build |
-| `Dockerfile.reference` | Traditional Dockerfile (reference only, Nix build recommended) |
-| `.mise.toml` | Runtime version management and task automation |
+| `Dockerfile` | Ubuntu 24.04-based container with all development tools |
+| `.mise.toml` | Configuration for frequently updated development tools |
 | `ENVIRONMENT.md` | Complete environment specification and package list |
 | `README.md` | This file - usage instructions |
 | `.gitignore` | Standard ignore patterns for development artifacts |
 
 ## Common Tasks
 
-### Installing Additional Tools
+### Installing Additional Tools with mise
 
-**With Nix:**
-```bash
-# Edit flake.nix and add package to buildInputs
-# Then rebuild the environment
-nix develop
-```
-
-**With mise:**
 ```bash
 # Edit .mise.toml and add tool
 # Then install
 mise install
 ```
 
-**With Docker:**
-```bash
-# Option 1: Edit flake.nix (for system packages) or .mise.toml (for runtime tools)
-# Then rebuild the image with Nix
-nix build .#dockerImage
-docker load < result
-
-# Option 2: Install tools directly in running container with mise
-docker exec -it dev-env-container mise use tool@version
-```
-
 ### Managing Language Versions
 
-Language versions are managed through **Nix**:
+Language versions are baked into the Docker image. To change versions:
+
 ```bash
-# Edit flake.nix and change package versions
+# Edit Dockerfile and change version numbers
 # Example: nodejs_22 -> nodejs_20
-# Then rebuild the environment
-nix develop
-
-# Or rebuild the Docker image
-nix build .#dockerImage
-docker load < result
+# Then rebuild
+docker build -t dev-env .
 ```
-
-**mise** is only used for frequently updated dev tools (Claude Code, GitHub CLI, opencode).
 
 ### Running Project Tasks
 
 mise provides task automation:
-```bash
-# List available tasks
-mise tasks
 
-# Run a specific task
-mise run install-python-packages
-mise run install-global-npm
-mise run setup
+```bash
+# Show information about mise-managed tools
 mise run info
+```
+
+### Adding apt Packages
+
+```bash
+# Inside the container
+apt-get update
+apt-get install <package-name>
+
+# Or add to Dockerfile for permanent installation
 ```
 
 ## Troubleshooting
 
-### Nix Flake Issues
-
-```bash
-# Update flake lock file
-nix flake update
-
-# Rebuild with verbose output
-nix develop --verbose
-```
-
 ### Docker Issues
 
 ```bash
-# Rebuild Docker image with Nix
-nix build .#dockerImage --rebuild
-
-# Check if image loaded correctly
-docker images | grep dev-env
+# Clean build (no cache)
+docker build --no-cache -t dev-env .
 
 # Check container logs
 docker logs dev-env-container
 
-# If using the reference Dockerfile
-docker build -f Dockerfile.reference -t dev-env .
+# Remove all containers and rebuild
+docker rm -f dev-env-container
+docker build -t dev-env .
 ```
 
 ### mise Issues
@@ -255,18 +161,35 @@ mise install --force
 mise --verbose install
 ```
 
-## Contributing
+## Environment Details
 
-To update the environment specification:
+See [ENVIRONMENT.md](./ENVIRONMENT.md) for complete specifications including:
+- Exact package versions
+- Installed libraries
+- Programming language versions
+- Build tools and compilers
 
-1. Modify the appropriate configuration file(s)
-2. Test the changes
-3. Update ENVIRONMENT.md with new package versions
-4. Commit and push
+### Core Components
+
+- **OS**: Ubuntu 24.04 LTS
+- **Languages**: Python 3.11, Node.js 22, Go 1.24, Rust 1.91, Java 21, PHP 8.3, Ruby 3.3, Perl 5.38
+- **Build Tools**: GCC 13, Clang 18, CMake 3.28, Make 4.3
+- **Databases**: PostgreSQL 16 client, Redis 7 client
+- **Development Tools** (via mise): Claude Code, GitHub CLI, opencode
+
+## Architecture Philosophy
+
+This environment prioritizes:
+
+1. **Portability** - Standard Ubuntu base that everyone understands
+2. **Familiarity** - Traditional Linux filesystem and tools
+3. **Flexibility** - Easy to add packages via apt or language package managers
+4. **Separation of Concerns** - mise only for frequently updated dev tools
+
+The Docker image provides a complete, consistent development environment that can be easily shared across teams and works identically on any system with Docker installed.
 
 ## Additional Resources
 
-- [Nix Package Search](https://search.nixos.org/packages)
 - [mise Documentation](https://mise.jdx.dev/)
 - [Docker Documentation](https://docs.docker.com/)
 - [Ubuntu Packages](https://packages.ubuntu.com/)

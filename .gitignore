@@ -1,11 +1,5 @@
 # Environment artifacts
 
-# Nix
-.direnv/
-.envrc
-result
-result-*
-
 # mise
 .mise.lock
 .mise.local.toml

@@ -6,7 +6,7 @@ This document describes the complete development environment configuration for t
 
 - **OS**: Ubuntu 24.04.3 LTS (Noble Numbat)
 - **Architecture**: x86_64 (64-bit)
-- **Kernel**: Linux 4.4.0
+- **Deployment**: Docker container
 - **Shell**: GNU Bash 5.2.21
 
 ## Programming Languages
@@ -15,20 +15,16 @@ This document describes the complete development environment configuration for t
 - **Version**: 3.11.14
 - **Package Managers**:
   - pip 24.0, pip3
-  - uv (fast Python package installer and resolver, via Nix)
-- **Key Packages**:
-  - conan 2.23.0
-  - PyYAML 6.0.1
-  - Jinja2 3.1.6
-  - requests 2.32.5
-  - cryptography 41.0.7
+  - uv (fast Python package installer and resolver)
+- **Installation**: Via apt-get and official uv installer
 
 ### Node.js & JavaScript
-- **Node.js**: v22.21.1
-- **npm**: 10.9.4
-- **pnpm**: 10.25.0
-- **yarn**: 1.22.22
-- **bun**: 1.3.4
+- **Node.js**: v22.21.1 (via NodeSource repository)
+- **Package Managers**:
+  - npm 10.9.4 (bundled with Node.js)
+  - pnpm 10.25.0 (global npm package)
+  - yarn 1.22.22 (global npm package)
+  - bun 1.3.4 (via official installer)
 
 **Global npm packages**:
 - TypeScript 5.9.3
@@ -42,64 +38,70 @@ This document describes the complete development environment configuration for t
 
 ### Go
 - **Version**: 1.24.7 linux/amd64
+- **Installation**: Official tarball from go.dev
+- **GOPATH**: `/root/go`
 
 ### Rust
 - **Version**: 1.91.1
-- **Package Manager**: cargo (in /root/.cargo/bin/)
+- **Installation**: Via rustup official installer
+- **Package Manager**: cargo
 
 ### Java
 - **Version**: OpenJDK 21.0.9
-- **Runtime**: OpenJDK Runtime Environment (build 21.0.9+10-Ubuntu-124.04)
-- **JVM**: OpenJDK 64-Bit Server VM (mixed mode, sharing)
+- **Installation**: Via apt-get (openjdk-21-jdk)
+- **JAVA_HOME**: `/usr/lib/jvm/java-21-openjdk-amd64`
 
 ### PHP
-- **Version**: 8.4.15 (cli) NTS
-- **Extensions**: curl module available
+- **Version**: 8.3 (cli)
+- **Installation**: Via apt-get
+- **Extensions**: curl, mbstring, xml
 
 ### Ruby
-- **Version**: 3.3.6 (2024-11-05)
-- **Platform**: x86_64-linux
+- **Version**: 3.3.6
+- **Installation**: Via apt-get (ruby-full)
 
 ### Perl
 - **Version**: 5.38.2
-- **Platform**: x86_64-linux-gnu-thread-multi
+- **Installation**: Included in Ubuntu base image
 
 ## Build Tools & Compilers
 
 ### C/C++ Toolchain
-- **GCC**: 13.3.0 (Ubuntu 13.3.0-6ubuntu2~24.04)
-- **Clang**: 18.1.3 (1ubuntu1)
+- **GCC**: 13.3.0 (Ubuntu 13.3.0-6ubuntu2~24.04) - set as default
+- **Clang**: 18.1.3
 - **Make**: GNU Make 4.3
 - **CMake**: 3.28.3
-- **Ninja**: Available
+- **Ninja**: Available via apt-get
 
 ### System Libraries (Development Headers)
 - libssl-dev 3.0.13-0ubuntu3.6
-- libssl3t64 3.0.13-0ubuntu3.6
 - zlib1g-dev 1:1.3.dfsg-3.1ubuntu2.1
 - libffi-dev 3.4.6-1build1
 - libsqlite3-dev 3.45.1-1ubuntu2.5
+- libcurl4-openssl-dev
 
 ## Databases
 
 ### PostgreSQL
 - **Client Version**: 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
+- **Installation**: Via apt-get (postgresql-client-16)
 
 ### Redis
 - **Client Version**: 7.0.15
+- **Installation**: Via apt-get (redis-tools)
 
 ### SQLite
-- **Version**: 3.45.1
+- **Version**: 3.45.1 (library only)
 
-## Version Control & Tools
+## Version Control & Utilities
 
 - **Git**: 2.43.0
-- **build-essential**: Installed
 - **curl**: Installed
 - **wget**: Installed
 - **jq**: Installed (JSON processor)
 - **vim**: Installed
 - **tmux**: Installed
+- **Standard Ubuntu tools**: All available
 
 ## Frequently Updated Development Tools (via mise)
 
@@ -119,53 +121,73 @@ To update to the latest versions:
 mise upgrade
 ```
 
-## Notable Absences
+## Installation Paths
 
-The following common tools are **NOT** installed in the base environment (but can be added via mise):
-- Docker
-- kubectl
-- terraform
-- ansible
-- ffmpeg
-- ImageMagick
-- sqlite3 CLI (library only)
-- mysql/mongosh clients
+- **Node.js**: Managed by NodeSource repository
+- **Rust/Cargo**: `/root/.cargo/bin/`
+- **Bun**: `/root/.bun/bin/` (symlinked to `/usr/local/bin/bun`)
+- **Go**: `/usr/local/go/bin/`
+- **mise**: `/root/.local/bin/`
+- **uv**: `/root/.cargo/bin/`
 
-## Package Installation Paths
+## Environment Setup
 
-- Node.js: `/opt/node22/`
-- Rust cargo: `/root/.cargo/bin/`
-- Bun: `/root/.bun/bin/`
+### Docker Build
 
-## Recommendations for Replication
-
-### Using Nix Flake (Primary)
-Use the provided `flake.nix` to set up the core development environment with reproducible package versions.
-
-### Using mise (Incidentals & Frequently Updated Tools)
-Use the provided `.mise.toml` for:
-- Language version management
-- Project-specific tool versions
-- Frequently updated development tools (Claude Code, GitHub CLI, opencode)
-- Additional utilities not critical to core functionality
-
-### Using Docker
-Build a Docker image using Nix for maximum reproducibility:
+Build the Docker image:
 ```bash
-nix build .#dockerImage
-docker load < result
+docker build -t dev-env .
 ```
 
-The Docker image is built with `dockerTools.buildLayeredImage`, providing:
-- Byte-for-byte reproducible builds
-- Optimal layer caching
-- Same package definitions as the dev shell
-- Smaller image sizes compared to traditional Dockerfile builds
+### Running the Environment
 
-A traditional `Dockerfile.reference` is available for reference, but the Nix build is recommended.
+```bash
+# Interactive mode
+docker run -it -v $(pwd):/workspace dev-env
+
+# Background mode
+docker run -d --name dev-env-container -v $(pwd):/workspace dev-env
+docker exec -it dev-env-container /bin/bash
+```
+
+### Installing mise Tools
+
+Once inside the container:
+```bash
+mise install          # Install Claude Code, GitHub CLI, opencode
+mise run info         # Show tool information
+```
+
+## Architecture Decisions
+
+### Why Ubuntu 24.04 LTS?
+
+- **Familiar**: Most developers know Ubuntu
+- **Stable**: LTS release with 5 years of support
+- **Compatible**: Standard Linux paths and tools
+- **Portable**: Works the same everywhere with Docker
+- **Flexible**: Easy to add packages via apt
+
+### Why mise for Dev Tools?
+
+- **Focused Use**: Only for frequently updated tools
+- **Easy Updates**: `mise upgrade` keeps tools current
+- **Separation of Concerns**: Languages in Docker, dev tools in mise
+- **Optional**: Core environment works without mise
+
+### Why Not Nix?
+
+While Nix provides excellent reproducibility, it was removed because:
+- Not familiar to most developers
+- Non-standard filesystem paths
+- Steeper learning curve
+- Ubuntu + Docker provides sufficient portability
+- mise handles the "frequently updated" use case well
 
 ## Notes
 
 - This is a comprehensive development environment with support for multiple languages and frameworks
-- The environment appears to be optimized for web development, systems programming, and general-purpose software development
+- The environment is optimized for web development, systems programming, and general-purpose software development
+- All packages are installed via official sources (apt, official installers, npm global)
 - Package versions are current as of December 2025
+- The Docker image provides a consistent, portable environment
