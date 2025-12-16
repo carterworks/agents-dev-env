@@ -32,6 +32,7 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     ca-certificates \
     software-properties-common \
+    unzip \
     # System libraries (dev headers)
     libssl-dev \
     zlib1g-dev \
@@ -43,12 +44,14 @@ RUN apt-get update && apt-get install -y \
     redis-tools \
     && rm -rf /var/lib/apt/lists/*
 
-# Set GCC 13 as default
+# Set GCC 13 and Clang 18 as default
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 \
-    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100 \
+    && update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100 \
+    && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 100
 
 # Install Python 3.11 and uv
-RUN apt-get update && apt-get install -y \
+RUN add-apt-repository ppa:deadsnakes/ppa -y && apt-get update && apt-get install -y \
     python3.11 \
     python3.11-dev \
     python3-pip \
@@ -70,9 +73,9 @@ RUN curl -fsSL https://bun.sh/install | bash \
     && ln -s /root/.bun/bin/bun /usr/local/bin/bun
 
 # Install Go 1.24
-RUN wget https://go.dev/dl/go1.24.7.linux-amd64.tar.gz \
-    && tar -C /usr/local -xzf go1.24.7.linux-amd64.tar.gz \
-    && rm go1.24.7.linux-amd64.tar.gz
+RUN wget https://go.dev/dl/go1.24.7.linux-arm64.tar.gz \
+    && tar -C /usr/local -xzf go1.24.7.linux-arm64.tar.gz \
+    && rm go1.24.7.linux-arm64.tar.gz
 ENV PATH="/usr/local/go/bin:${PATH}"
 ENV GOPATH="/root/go"
 ENV PATH="${GOPATH}/bin:${PATH}"
@@ -122,6 +125,9 @@ WORKDIR /workspace
 
 # Copy mise configuration
 COPY .mise.toml /workspace/.mise.toml
+
+# Trust the mise config
+RUN mise trust /workspace/.mise.toml
 
 # Activate mise in bashrc
 RUN echo 'eval "$(mise activate bash)"' >> /root/.bashrc

@@ -6,9 +6,10 @@
 
 [tools]
 # Frequently updated development tools (managed via mise)
-"npm:@anthropic-ai/claude-code" = "latest"  # Anthropic's Claude AI CLI
-"go:github.com/sst/opencode" = "latest"     # SST's code generation tool
-gh = "latest"                                # GitHub CLI (includes Copilot extensions)
+claude = "latest"
+opencode = "latest"
+codex = "latest"
+gh = "latest"
 
 # Additional tools (optional - uncomment as needed)
 # "npm:typescript" = "5.9.3"
@@ -16,10 +17,6 @@ gh = "latest"                                # GitHub CLI (includes Copilot exte
 # "npm:prettier" = "3.7.4"
 # terraform = "latest"
 # kubectl = "latest"
-
-[env]
-# Minimal environment variables (languages provided by Nix)
-_.file = ".env"  # Load .env file if present
 
 [settings]
 # Automatically install missing tools
@@ -30,30 +27,3 @@ legacy_version_file = true
 
 # Verbose output
 verbose = false
-
-# Plugin settings
-experimental = true
-
-[tasks.info]
-description = "Show mise-managed development tools"
-run = """
-echo "mise-managed Development Tools"
-echo "==============================="
-echo ""
-echo "Installed tools:"
-mise list
-echo ""
-echo "Tool versions:"
-echo "  Claude Code: $(claude-code --version 2>&1 || echo 'not installed - run: mise install')"
-echo "  GitHub CLI: $(gh --version 2>&1 | head -1 || echo 'not installed - run: mise install')"
-echo "  opencode: $(opencode --version 2>&1 || echo 'not installed - run: mise install')"
-echo ""
-echo "To install all tools: mise install"
-echo "To upgrade tools:     mise upgrade"
-"""
-
-# Additional aliases for common operations
-[alias]
-i = "install"
-u = "upgrade"
-ls = "list"
