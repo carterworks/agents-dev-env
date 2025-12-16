@@ -51,8 +51,8 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             # Tag with major version for tags
             type=semver,pattern={{major}}
-            # Tag with short SHA for all pushes
-            type=sha,prefix={{branch}}-
+             # Tag with short SHA for all pushes
+             type=sha,prefix=sha-
             # Tag with branch name for non-main branches
             type=ref,event=branch
             # Tag with PR number for pull requests
