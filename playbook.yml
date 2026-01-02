@@ -1,27 +1,17 @@
 ---
 # =============================================================================
-# AI Agent Development Environment
-# Ansible playbook matching Claude Code on the Web specification
-# Uses mise for reproducible language version management
+# Development Environment
+# Languages via apt, mise available for version management & AI coding agents
 # =============================================================================
 
-- name: Setup AI Agent Development Environment
+- name: Setup Universal Development Environment
   hosts: all
   become: true
   vars:
     mise_data_dir: /mise
     mise_config_dir: /mise
     mise_cache_dir: /mise/cache
-    mise_install_path: /usr/local/bin/mise
     workspace_dir: /workspace
-
-    # Tool versions
-    python_version: "3.11"
-    node_version: "22"
-    go_version: "1.24"
-    rust_version: "latest"
-    java_version: "openjdk-21"
-    ruby_version: "3.3"
 
     # ==========================================================================
     # Optional: Pass these via environment or --extra-vars for automated setup
@@ -35,10 +25,6 @@
     # Git user config
     git_user_name: "{{ lookup('env', 'GIT_USER_NAME') | default('', true) }}"
     git_user_email: "{{ lookup('env', 'GIT_USER_EMAIL') | default('', true) }}"
-
-    # AI Agent API keys
-    anthropic_api_key: "{{ lookup('env', 'ANTHROPIC_API_KEY') | default('', true) }}"
-    openai_api_key: "{{ lookup('env', 'OPENAI_API_KEY') | default('', true) }}"
 
     # SSH private key (base64 encoded) for git operations
     ssh_private_key_b64: "{{ lookup('env', 'SSH_PRIVATE_KEY_B64') | default('', true) }}"
@@ -90,6 +76,23 @@
       - ripgrep
       - fd-find
 
+    # Language packages (via apt)
+    language_packages:
+      # Python
+      - python3
+      - python3-pip
+      - python3-venv
+      - python3-dev
+      # Node.js (via nodesource, added separately)
+      # Go
+      - golang
+      # Ruby
+      - ruby
+      - ruby-dev
+      # Java
+      - default-jdk
+      # Rust installed via rustup
+
     # Node.js global packages
     npm_global_packages:
       - pnpm
@@ -115,7 +118,6 @@
     MISE_DATA_DIR: "{{ mise_data_dir }}"
     MISE_CONFIG_DIR: "{{ mise_config_dir }}"
     MISE_CACHE_DIR: "{{ mise_cache_dir }}"
-    MISE_INSTALL_PATH: "{{ mise_install_path }}"
     PATH: "{{ mise_data_dir }}/shims:/usr/local/bin:/usr/bin:/bin"
 
   tasks:
@@ -132,6 +134,58 @@
         name: "{{ system_packages }}"
         state: present
         install_recommends: false
+
+    # =========================================================================
+    # Language Runtimes (via apt)
+    # =========================================================================
+    - name: Install language packages
+      ansible.builtin.apt:
+        name: "{{ language_packages }}"
+        state: present
+        install_recommends: false
+
+    # Node.js via NodeSource (Debian's is too old)
+    - name: Add NodeSource GPG key
+      ansible.builtin.get_url:
+        url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+        dest: /etc/apt/keyrings/nodesource.asc
+        mode: "0644"
+
+    - name: Add NodeSource repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/nodesource.asc] https://deb.nodesource.com/node_22.x nodistro main"
+        state: present
+        filename: nodesource
+
+    - name: Install Node.js
+      ansible.builtin.apt:
+        name: nodejs
+        state: present
+        update_cache: true
+
+    # Rust via rustup (apt version is too old)
+    - name: Install Rust via rustup
+      ansible.builtin.shell: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      args:
+        creates: /root/.cargo/bin/rustc
+      environment:
+        RUSTUP_HOME: /usr/local/rustup
+        CARGO_HOME: /usr/local/cargo
+
+    - name: Add Rust to system PATH
+      ansible.builtin.copy:
+        dest: /etc/profile.d/rust.sh
+        mode: "0644"
+        content: |
+          export RUSTUP_HOME=/usr/local/rustup
+          export CARGO_HOME=/usr/local/cargo
+          export PATH="/usr/local/cargo/bin:$PATH"
+
+    - name: Install Rust components
+      ansible.builtin.shell: |
+        . /etc/profile.d/rust.sh && rustup component add clippy rustfmt
+      changed_when: true
 
     - name: Create fd symlink (Ubuntu installs as fdfind)
       ansible.builtin.file:
@@ -215,7 +269,13 @@
       ansible.builtin.shell: |
         curl https://mise.run | sh
       args:
-        creates: "{{ mise_install_path }}"
+        creates: /root/.local/bin/mise
+
+    - name: Symlink mise to /usr/local/bin
+      ansible.builtin.file:
+        src: /root/.local/bin/mise
+        dest: /usr/local/bin/mise
+        state: link
 
     - name: Create mise config
       ansible.builtin.copy:
@@ -223,58 +283,83 @@
         mode: "0644"
         content: |
           [tools]
-          # Languages - matching Claude Code on the Web spec
-          python = "{{ python_version }}"
-          node = "{{ node_version }}"
-          go = "{{ go_version }}"
-          rust = "{{ rust_version }}"
-          java = "{{ java_version }}"
-          ruby = "{{ ruby_version }}"
-          # php omitted - requires complex build dependencies
-
-          # AI Coding Agents
+          # AI Coding Agents (frequently updated, managed via mise)
           claude = "latest"
           codex = "latest"
           opencode = "latest"
 
-          # Python tools
-          uv = "latest"
-
-          # CLI tools
-          github-cli = "latest"
+          # Additional tools available via mise if needed:
+          # python = "3.12"    # Override system Python
+          # node = "20"        # Override system Node
+          # go = "1.22"        # Override system Go
+          # uv = "latest"      # Fast Python package manager
 
           [settings]
           experimental = true
 
     - name: Trust mise config
-      ansible.builtin.command: "{{ mise_install_path }} trust {{ mise_config_dir }}/config.toml"
+      ansible.builtin.command: mise trust {{ mise_config_dir }}/config.toml
       changed_when: true
 
-    - name: Install all mise tools
-      ansible.builtin.command: "{{ mise_install_path }} install --yes"
+    - name: Install mise tools (AI coding agents)
+      ansible.builtin.command: mise install --yes
       changed_when: true
 
     # =========================================================================
     # Package Managers & Global Packages
     # =========================================================================
     - name: Install npm global packages
-      ansible.builtin.shell: |
-        {{ mise_install_path }} exec -- npm install -g {{ npm_global_packages | join(' ') }}
-      changed_when: true
-
-    - name: Install bun via mise
-      ansible.builtin.command: "{{ mise_install_path }} use -g bun@latest"
+      ansible.builtin.command: npm install -g {{ npm_global_packages | join(' ') }}
       changed_when: true
 
     - name: Install Python packages
-      ansible.builtin.shell: |
-        {{ mise_install_path }} exec -- pip install --no-cache-dir {{ pip_packages | join(' ') }}
+      ansible.builtin.command: pip3 install --no-cache-dir --break-system-packages {{ pip_packages | join(' ') }}
       changed_when: true
 
-    - name: Install Rust components
+    # Bun (fast JS runtime/bundler)
+    - name: Install Bun
       ansible.builtin.shell: |
-        {{ mise_install_path }} exec -- rustup component add clippy rustfmt
-      changed_when: true
+        curl -fsSL https://bun.sh/install | bash
+      args:
+        creates: /root/.bun/bin/bun
+      environment:
+        BUN_INSTALL: /usr/local
+
+    - name: Add Bun to system PATH
+      ansible.builtin.copy:
+        dest: /etc/profile.d/bun.sh
+        mode: "0644"
+        content: |
+          export BUN_INSTALL=/usr/local
+          export PATH="/usr/local/bin:$PATH"
+
+    # uv (fast Python package manager)
+    - name: Install uv
+      ansible.builtin.shell: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+      args:
+        creates: /root/.local/bin/uv
+      environment:
+        UV_INSTALL_DIR: /usr/local/bin
+
+    # GitHub CLI via apt (more stable than mise for this)
+    - name: Add GitHub CLI GPG key
+      ansible.builtin.get_url:
+        url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+        dest: /etc/apt/keyrings/githubcli-archive-keyring.gpg
+        mode: "0644"
+
+    - name: Add GitHub CLI repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main"
+        state: present
+        filename: github-cli
+
+    - name: Install GitHub CLI
+      ansible.builtin.apt:
+        name: gh
+        state: present
+        update_cache: true
 
     # =========================================================================
     # Workspace Setup
@@ -293,7 +378,7 @@
           #!/bin/bash
           set -e
           echo "==========================================="
-          echo "   AI Agent Development Environment"
+          echo "                Dev Env                    "
           echo "==========================================="
           echo ""
           echo "System:"
@@ -301,26 +386,26 @@
           echo "  Kernel:  $(uname -r)"
           echo "  Arch:    $(uname -m)"
           echo ""
-          echo "AI Coding Agents:"
-          echo "  claude:   $(claude --version 2>&1 | head -1 || echo 'not found')"
-          echo "  codex:    $(codex --version 2>&1 | head -1 || echo 'not found')"
-          echo "  opencode: $(opencode --version 2>&1 | head -1 || echo 'not found')"
-          echo ""
           echo "Languages:"
-          echo "  Python:  $(python --version 2>&1 | awk '{print $2}')"
+          echo "  Python:  $(python3 --version 2>&1 | awk '{print $2}')"
           echo "  Node.js: $(node --version)"
           echo "  Go:      $(go version | awk '{print $3}')"
           echo "  Rust:    $(rustc --version | awk '{print $2}')"
           echo "  Java:    $(java --version 2>&1 | head -1)"
           echo "  Ruby:    $(ruby --version | awk '{print $2}')"
           echo ""
+          echo "AI Coding Agents (via mise):"
+          echo "  claude:   $(claude --version 2>&1 | head -1 || echo 'not installed')"
+          echo "  codex:    $(codex --version 2>&1 | head -1 || echo 'not installed')"
+          echo "  opencode: $(opencode --version 2>&1 | head -1 || echo 'not installed')"
+          echo ""
           echo "Package Managers:"
           echo "  npm:     $(npm --version)"
           echo "  pnpm:    $(pnpm --version)"
           echo "  yarn:    $(yarn --version)"
           echo "  bun:     $(bun --version)"
-          echo "  pip:     $(pip --version | awk '{print $2}')"
-          echo "  uv:      $(uv --version | awk '{print $2}')"
+          echo "  pip:     $(pip3 --version | awk '{print $2}')"
+          echo "  uv:      $(uv --version 2>&1 | awk '{print $2}' || echo 'not installed')"
           echo "  cargo:   $(cargo --version | awk '{print $2}')"
           echo ""
           echo "Build Tools:"
@@ -342,9 +427,8 @@
           export MISE_DATA_DIR="{{ mise_data_dir }}"
           export MISE_CONFIG_DIR="{{ mise_config_dir }}"
           export MISE_CACHE_DIR="{{ mise_cache_dir }}"
-          export MISE_INSTALL_PATH="{{ mise_install_path }}"
           export PATH="{{ mise_data_dir }}/shims:$PATH"
-          eval "$({{ mise_install_path }} activate bash)"
+          eval "$(mise activate bash)"
 
     - name: Clean apt cache
       ansible.builtin.apt:
@@ -356,7 +440,7 @@
     # =========================================================================
     - name: Authenticate GitHub CLI
       ansible.builtin.shell: |
-        echo "{{ gh_token }}" | {{ mise_install_path }} exec -- gh auth login --with-token
+        echo "{{ gh_token }}" | gh auth login --with-token
       when: gh_token | length > 0
       changed_when: true
       no_log: true
@@ -382,21 +466,3 @@
         key: "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
         state: present
       when: ssh_private_key_b64 | length > 0
-
-    # =========================================================================
-    # AI Agent Environment Variables
-    # =========================================================================
-    - name: Create AI agent environment file
-      ansible.builtin.copy:
-        dest: /etc/profile.d/ai-agents.sh
-        mode: "0644"
-        content: |
-          # AI Agent API Keys (set via environment during provisioning)
-          {% if anthropic_api_key | length > 0 %}
-          export ANTHROPIC_API_KEY="{{ anthropic_api_key }}"
-          {% endif %}
-          {% if openai_api_key | length > 0 %}
-          export OPENAI_API_KEY="{{ openai_api_key }}"
-          {% endif %}
-      when: (anthropic_api_key | length > 0) or (openai_api_key | length > 0)
-      no_log: true
