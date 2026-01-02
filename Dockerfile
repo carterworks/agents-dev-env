@@ -46,6 +46,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Database clients
     postgresql-client \
     redis-tools \
+    sqlite3 \
     # Utilities
     jq \
     vim \
@@ -53,13 +54,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     sudo \
     locales \
+    less \
+    openssh-client \
+    git-lfs \
+    ripgrep \
+    fd-find \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && apt-get clean \
+    # fd is installed as fdfind on Ubuntu, symlink to fd
+    && ln -s $(which fdfind) /usr/local/bin/fd
 
 # Set up locale
 RUN locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
+
+# Install Tailscale
+RUN curl -fsSL https://tailscale.com/install.sh | sh
+
+# Git configuration - mark /workspace as safe to avoid "dubious ownership" errors
+RUN git config --system --add safe.directory /workspace \
+    && git lfs install
 
 # =============================================================================
 # mise Configuration
