@@ -207,5 +207,9 @@ echo "==========================================="
 SCRIPT
 RUN chmod +x /usr/local/bin/check-versions
 
-# Default command
-CMD ["/bin/bash"]
+# Default command - keep container running
+CMD ["tail", "-f", "/dev/null"]
+
+# Healthcheck - verify mise and core tools are available
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD mise --version && python --version && node --version
