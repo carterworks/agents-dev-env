@@ -10,32 +10,9 @@ permissions:
   packages: write
 
 jobs:
-  update-lockfile:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repo
-        uses: actions/checkout@v5
-
-      - name: Set up mise
-        uses: jdx/mise-action@v3
-
-      - name: Update lockfile
-        run: mise lock -y
-
-      - name: Create pull request
-        uses: peter-evans/create-pull-request@v7
-        with:
-          commit-message: "chore: update mise.lock"
-          title: "Update mise.lock"
-          body: "Monthly dependency update"
-          branch: mise-lock-update
-          delete-branch: true
-          base: main
-
   rebuild-container:
     runs-on: ubuntu-latest
-    needs: update-lockfile
-    if: github.event_name == 'schedule'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
 
     permissions:
       contents: read
@@ -61,7 +38,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=sha,prefix=lock-update-
+            type=sha,prefix=monthly-
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push
         uses: docker/build-push-action@v6
