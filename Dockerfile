@@ -120,8 +120,11 @@ github-cli = "latest"
 experimental = true
 EOF
 
-# Install all tools via mise
-RUN mise install --yes
+# Copy lockfile for reproducible builds
+COPY mise.lock /mise/mise.lock
+
+# Install all tools via mise (uses lockfile if present)
+RUN mise install --locked
 
 # Trust the config
 RUN mise trust /mise/config.toml
