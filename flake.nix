@@ -43,6 +43,9 @@
     build-essentials.url = "path:./tools/build-essentials";
     build-essentials.inputs.nixpkgs.follows = "nixpkgs";
 
+    mise.url = "path:./tools/mise";
+    mise.inputs.nixpkgs.follows = "nixpkgs";
+
     ai-dev.url = "path:./tools/ai-dev";
     ai-dev.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -152,6 +155,7 @@
       databases = inputs.databases.nixosModules.default;
       utilities = inputs.utilities.nixosModules.default;
       build-essentials = inputs.build-essentials.nixosModules.default;
+      mise = inputs.mise.nixosModules.default;
       ai-dev = inputs.ai-dev.nixosModules.default;
       networking = inputs.networking.nixosModules.default;
     };

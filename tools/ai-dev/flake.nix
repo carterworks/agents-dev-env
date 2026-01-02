@@ -1,47 +1,37 @@
 {
-  description = "AI Development Tools - mise for AI coding agents";
+  description = "AI Development Tools - Configure mise for AI coding agents";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    mise.url = "path:../mise";
+    mise.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs }: {
+  outputs = { self, nixpkgs, mise }: {
     nixosModules.default = { config, pkgs, lib, ... }: {
-      # mise - polyglot runtime manager for AI coding agents
-      environment.systemPackages = with pkgs; [
-        mise
-      ];
+      # Import mise module
+      imports = [ mise.nixosModules.default ];
 
-      # mise configuration directories
-      environment.variables = {
-        MISE_DATA_DIR = "/mise";
-        MISE_CONFIG_DIR = "/mise";
-        MISE_CACHE_DIR = "/mise/cache";
-      };
+      # Create mise config for AI tools
+      system.activationScripts.mise-ai-config = ''
+        # Ensure mise directories exist
+        mkdir -p ${config.environment.variables.MISE_CONFIG_DIR}
 
-      # Add mise shims to PATH
-      environment.sessionVariables = {
-        PATH = [ "/mise/shims" ];
-      };
-
-      # Create mise directories and config
-      system.activationScripts.mise = ''
-        # Create mise directories
-        mkdir -p /mise /mise/cache
-
-        # Create mise config if it doesn't exist
-        if [ ! -f /mise/config.toml ]; then
-          cat > /mise/config.toml <<'EOF'
+        # Create mise config for AI tools if it doesn't exist
+        if [ ! -f ${config.environment.variables.MISE_CONFIG_DIR}/config.toml ]; then
+          cat > ${config.environment.variables.MISE_CONFIG_DIR}/config.toml <<'EOF'
 [tools]
 # AI Coding Agents (frequently updated, managed via mise)
 # Uncomment and install as needed:
 # claude = "latest"
 # codex = "latest"
 # opencode = "latest"
+# aider = "latest"
+# cursor = "latest"
 
-# Additional tools available via mise if needed:
+# Additional development tools available via mise:
 # python = "3.12"    # Override system Python
-# node = "20"        # Override system Node
+# node = "22"        # Override system Node
 # go = "1.22"        # Override system Go
 # uv = "latest"      # Fast Python package manager
 
@@ -51,19 +41,10 @@ EOF
         fi
 
         # Trust the config
-        ${pkgs.mise}/bin/mise trust /mise/config.toml || true
+        ${pkgs.mise}/bin/mise trust ${config.environment.variables.MISE_CONFIG_DIR}/config.toml || true
 
         # Install tools defined in config
         ${pkgs.mise}/bin/mise install --yes || true
-      '';
-
-      # Add mise activation to shell profiles
-      programs.bash.interactiveShellInit = ''
-        eval "$(${pkgs.mise}/bin/mise activate bash)"
-      '';
-
-      programs.zsh.interactiveShellInit = lib.mkIf config.programs.zsh.enable ''
-        eval "$(${pkgs.mise}/bin/mise activate zsh)"
       '';
     };
 
@@ -78,8 +59,9 @@ EOF
           mise
         ];
         shellHook = ''
-          echo "🤖 AI Development Tools"
-          echo "  mise: $(mise --version)"
+          echo "🤖 AI Development Tools (mise-based)"
+          echo "  Configure AI tools in ${config.environment.variables.MISE_CONFIG_DIR or "/etc/mise"}/config.toml"
+          echo "  Run 'mise install' to install configured tools"
           eval "$(mise activate bash)"
         '';
       }

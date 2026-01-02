@@ -33,7 +33,8 @@ This repository provides modular NixOS flakes organized by language and task gro
 │   ├── databases/              # PostgreSQL, Redis, SQLite clients
 │   ├── utilities/              # jq, vim, tmux, ripgrep, fd, etc.
 │   ├── build-essentials/       # Build tools, dev libraries
-│   └── ai-dev/                 # mise for AI coding agents
+│   ├── mise/                   # mise - polyglot runtime manager
+│   └── ai-dev/                 # AI tool configuration (uses mise)
 └── services/                   # System services
     └── networking/             # Tailscale VPN
 ```
@@ -172,7 +173,8 @@ Import individual modules in your existing NixOS configuration:
 | `databases` | Database clients | PostgreSQL, Redis, SQLite, pgcli |
 | `utilities` | System utilities | jq, vim, tmux, ripgrep, fd, bat |
 | `build-essentials` | Build libraries | OpenSSL, zlib, dev headers, pkg-config |
-| `ai-dev` | AI coding tools | mise for AI agent management |
+| `mise` | Runtime manager | mise - polyglot tool version manager |
+| `ai-dev` | AI coding tools | Configures mise for AI agents (claude, aider, etc.) |
 
 ### Services
 
@@ -229,6 +231,48 @@ Override Git settings in your configuration:
   };
 }
 ```
+
+### Using mise and AI Development Tools
+
+The `mise` module installs the mise runtime manager, while `ai-dev` configures it for AI coding tools:
+
+```nix
+{
+  # Option 1: Just mise (manual configuration)
+  imports = [ dev-env.nixosModules.mise ];
+
+  # Option 2: mise + AI tools pre-configured
+  imports = [ dev-env.nixosModules.ai-dev ];  # Automatically includes mise
+}
+```
+
+**Configure AI tools** in `/etc/mise/config.toml`:
+
+```toml
+[tools]
+# Uncomment to install AI coding agents
+# aider = "latest"
+# claude = "latest"
+
+# Or override system tools with specific versions
+# python = "3.12"
+# node = "22"
+
+[settings]
+experimental = true
+```
+
+**Install configured tools**:
+
+```bash
+# Install all tools from config
+sudo mise install
+
+# Or install specific tool
+sudo mise install aider@latest
+```
+
+**Note**: AI tools installed via mise are NOT managed by Nix and won't be in your flake.lock. This is intentional - AI tools update frequently and you want the latest versions.
 
 ### Custom Package Versions
 
