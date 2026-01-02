@@ -1,0 +1,24 @@
+# Nix build artifacts
+result
+result-*
+
+# Nix flake outputs
+.direnv/
+
+# NixOS hardware configuration (machine-specific)
+hardware-configuration.nix
+
+# Secrets (if using sops-nix or agenix)
+secrets.yaml
+*.age
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
