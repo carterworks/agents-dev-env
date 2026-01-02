@@ -208,7 +208,8 @@ SCRIPT
 RUN chmod +x /usr/local/bin/check-versions
 
 # Default command - keep container running
-CMD ["tail", "-f", "/dev/null"]
+# Use sleep infinity (TrueNAS compatible)
+CMD ["sleep", "infinity"]
 
 # Healthcheck - verify mise and core tools are available
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
