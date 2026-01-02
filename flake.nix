@@ -49,9 +49,6 @@
     # Service flakes
     networking.url = "path:./services/networking";
     networking.inputs.nixpkgs.follows = "nixpkgs";
-
-    workspace.url = "path:./services/workspace";
-    workspace.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = { self, nixpkgs, ... }@inputs: {
@@ -73,7 +70,6 @@
         inputs.build-essentials.nixosModules.default
         inputs.ai-dev.nixosModules.default
         inputs.networking.nixosModules.default
-        inputs.workspace.nixosModules.default
       ];
     };
 
@@ -88,7 +84,6 @@
           inputs.version-control.nixosModules.default
           inputs.databases.nixosModules.default
           inputs.utilities.nixosModules.default
-          inputs.workspace.nixosModules.default
         ];
       };
 
@@ -101,7 +96,6 @@
           inputs.version-control.nixosModules.default
           inputs.databases.nixosModules.default
           inputs.utilities.nixosModules.default
-          inputs.workspace.nixosModules.default
         ];
       };
 
@@ -115,7 +109,6 @@
           inputs.build-essentials.nixosModules.default
           inputs.version-control.nixosModules.default
           inputs.utilities.nixosModules.default
-          inputs.workspace.nixosModules.default
         ];
       };
 
@@ -131,7 +124,6 @@
           inputs.databases.nixosModules.default
           inputs.utilities.nixosModules.default
           inputs.networking.nixosModules.default
-          inputs.workspace.nixosModules.default
         ];
       };
 
@@ -142,7 +134,6 @@
           inputs.base.nixosModules.default
           inputs.version-control.nixosModules.default
           inputs.utilities.nixosModules.default
-          inputs.workspace.nixosModules.default
         ];
       };
     };
@@ -163,7 +154,6 @@
       build-essentials = inputs.build-essentials.nixosModules.default;
       ai-dev = inputs.ai-dev.nixosModules.default;
       networking = inputs.networking.nixosModules.default;
-      workspace = inputs.workspace.nixosModules.default;
     };
   };
 }

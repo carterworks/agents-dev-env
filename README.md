@@ -35,8 +35,7 @@ This repository provides modular NixOS flakes organized by language and task gro
 │   ├── build-essentials/       # Build tools, dev libraries
 │   └── ai-dev/                 # mise for AI coding agents
 └── services/                   # System services
-    ├── networking/             # Tailscale VPN
-    └── workspace/              # Workspace setup, check-versions script
+    └── networking/             # Tailscale VPN
 ```
 
 ## Quick Start
@@ -108,7 +107,6 @@ Create your own `configuration.nix` and import only what you need:
         dev-env.nixosModules.python
         dev-env.nixosModules.version-control
         dev-env.nixosModules.utilities
-        dev-env.nixosModules.workspace
 
         # Your custom config
         ./configuration.nix
@@ -181,7 +179,6 @@ Import individual modules in your existing NixOS configuration:
 | Module | Description | Configuration |
 |--------|-------------|---------------|
 | `networking` | Tailscale VPN | `services.tailscale.enable = true` |
-| `workspace` | Workspace setup | `/workspace` directory, `check-versions` script |
 
 ## Configuration Examples
 
